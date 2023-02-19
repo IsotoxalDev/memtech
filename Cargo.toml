@@ -1,0 +1,12 @@
+[package]
+name = "memtech"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "mt"
+path = "src/main.rs"
+
+[dependencies]
+crossterm = "0.26.0"
+rustyline = "10.1.1"
