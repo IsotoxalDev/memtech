@@ -5,9 +5,26 @@ use crossterm::{
     style::{Color, Print, ResetColor, SetForegroundColor},
     terminal::{self, Clear, ClearType, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use rustyline::error::ReadlineError;
-use rustyline::Editor;
-use std::io::{stdin, stdout, Write};
+use rustyline::{error::ReadlineError, DefaultEditor, Result};
+use std::{
+    io::{stdout, Write},
+    path::{Path, PathBuf},
+};
+
+fn get_history_file() -> Option<PathBuf> {
+    let home_dir = std::env::var_os("HOME").or_else(|| std::env::var_os("USERPROFILE"))?;
+    let config_dir_name = if cfg!(windows) {
+        "AppData\\Roaming"
+    } else {
+        ".config"
+    };
+    let config_dir_path = Path::new(config_dir_name);
+    Some(
+        PathBuf::from(home_dir)
+            .join(config_dir_path)
+            .join("memtech_hist"),
+    )
+}
 
 struct Life<W: Write> {
     write: W,
@@ -22,24 +39,24 @@ where
     }
 }
 
-fn main() {
+fn main() -> Result<()> {
     println!("Welcome to mt");
-    let mut rl = Editor::<()>::new().unwrap();
-    if rl.load_history("mt_hist").is_err() {
+    let mut rl = DefaultEditor::new()?;
+    if rl.load_history(&get_history_file().unwrap()).is_err() {
         println!("No previous history.");
+        println!("Enter a text you want to memorize\n")
     }
     let out = stdout();
     loop {
         let _ = Life { write: &out };
-        let mut s = false;
 
         let readline = rl.readline("➜ ");
         match readline {
             Ok(text) => {
-                rl.add_history_entry(text.as_str());
                 if text.to_uppercase() == "EXIT" {
                     break;
                 }
+                rl.add_history_entry(text.as_str())?;
                 execute!(
                     &out,
                     Hide,
@@ -52,6 +69,7 @@ fn main() {
                 .unwrap();
                 terminal::enable_raw_mode().unwrap();
                 loop {
+                    let mut s = false;
                     if let Event::Key(event) = read().unwrap() {
                         match event.code {
                             KeyCode::Esc => break,
@@ -107,4 +125,5 @@ fn main() {
         }
         rl.save_history("mt_hist").unwrap();
     }
+    Ok(())
 }
