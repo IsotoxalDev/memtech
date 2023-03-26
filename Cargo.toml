@@ -2,6 +2,11 @@
 name = "memtech"
 version = "0.1.0"
 edition = "2021"
+authors = ["IsotoxalDev"]
+license = "MIT"
+description = "Memtech is a simple cli tool to remember sentences"
+repository = "https://github.com/IsotoxalDev/memtech"
+keywords = ["CLI", "Study", "Productivity"]
 
 [[bin]]
 name = "mt"
